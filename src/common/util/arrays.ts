@@ -5,7 +5,7 @@
  * @returns the iterator
  */
 export function toIterator<T>(data: T[]): Iterator<T> {
-    return data[Symbol.iterator]();
+  return data[Symbol.iterator]();
 }
 
 /**
@@ -15,13 +15,13 @@ export function toIterator<T>(data: T[]): Iterator<T> {
  * @returns {T[]} the array representation of the given iterator
  */
 export function toArray<T>(iterator: Iterator<T>): T[] {
-    const result: T[] = [];
-    let current: IteratorResult<T>;
-    /* tslint:disable:no-conditional-assignment */
-    while (!(current = iterator.next()).done) {
-        result.push(current.value as T);
-    }
-    return result;
+  const result: T[] = [];
+  let current: IteratorResult<T>;
+  /* tslint:disable:no-conditional-assignment */
+  while (!(current = iterator.next()).done) {
+    result.push(current.value as T);
+  }
+  return result;
 }
 
 /**
@@ -31,12 +31,12 @@ export function toArray<T>(iterator: Iterator<T>): T[] {
  * @returns returns an array containing all the values contained in the sub arrays of deep array.
  */
 export function flattenArray<T>(deepArray: T[][]): T[] {
-    if (deepArray.length === 0) {
-        return [];
-    }
+  if (deepArray.length === 0) {
+    return [];
+  }
 
-    const [head, ...tail] = deepArray;
-    return Array.prototype.concat.apply(head, tail);
+  const [head, ...tail] = deepArray;
+  return Array.prototype.concat.apply(head, tail);
 }
 
 /**
@@ -45,12 +45,12 @@ export function flattenArray<T>(deepArray: T[][]): T[] {
  * @param toAppend the array to append to target
  */
 export function concatInPlace<T>(target: T[], toAppend: T[]): T[] {
-    const insertionIndex = target.length;
-    target.length += toAppend.length;
+  const insertionIndex = target.length;
+  target.length += toAppend.length;
 
-    for (let i = 0; i < toAppend.length; ++i) {
-        target[insertionIndex + i] = toAppend[i];
-    }
+  for (let i = 0; i < toAppend.length; ++i) {
+    target[insertionIndex + i] = toAppend[i];
+  }
 
-    return target;
+  return target;
 }

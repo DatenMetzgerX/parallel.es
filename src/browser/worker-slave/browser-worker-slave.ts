@@ -1,5 +1,5 @@
-import {SlaveFunctionLookupTable} from "../../common/function/slave-function-lookup-table";
-import {AbstractWorkerSlave} from "../../common/worker/abstract-worker-slave";
+import { SlaveFunctionLookupTable } from "../../common/function/slave-function-lookup-table";
+import { AbstractWorkerSlave } from "../../common/worker/abstract-worker-slave";
 
 declare function postMessage(data: any): void;
 
@@ -8,16 +8,15 @@ declare function postMessage(data: any): void;
  * Executes the tasks assigned by the thread pool via the {@link BrowserWorkerThread}.
  */
 export class BrowserWorkerSlave extends AbstractWorkerSlave {
+  constructor(public functionCache: SlaveFunctionLookupTable) {
+    super(functionCache);
+  }
 
-    constructor(public functionCache: SlaveFunctionLookupTable) {
-        super(functionCache);
-    }
+  public postMessage(message: any): void {
+    postMessage(message);
+  }
 
-    public postMessage(message: any): void {
-        postMessage(message);
-    }
-
-    protected terminate(): void {
-        close();
-    }
+  protected terminate(): void {
+    close();
+  }
 }

@@ -1,5 +1,5 @@
-import {IParallelTaskEnvironment} from "../";
-import {toIterator} from "../../util/arrays";
+import { IParallelTaskEnvironment } from "../";
+import { toIterator } from "../../util/arrays";
 /**
  * Reduces the elements of the given iterator to a single value by applying the given iteratee to each element
  * @param defaultValue a default value that is as accumulator or for the case that the iterator is empty
@@ -11,14 +11,19 @@ import {toIterator} from "../../util/arrays";
  * @param TResult type of the reduced value
  * @returns an array with a single value, the reduced value
  */
-export function reduceIterator<T, TResult>(defaultValue: TResult, iterator: Iterator<T>, iteratee: (this: void, accumulatedValue: TResult, value: T | undefined, env: IParallelTaskEnvironment) => TResult, env: IParallelTaskEnvironment): Iterator<TResult> {
-    let accumulatedValue = defaultValue;
-    let current: IteratorResult<T>;
+export function reduceIterator<T, TResult>(
+  defaultValue: TResult,
+  iterator: Iterator<T>,
+  iteratee: (this: void, accumulatedValue: TResult, value: T, env: IParallelTaskEnvironment) => TResult,
+  env: IParallelTaskEnvironment
+): Iterator<TResult> {
+  let accumulatedValue = defaultValue;
+  let current: IteratorResult<T>;
 
-    /* tslint:disable:no-conditional-assignment */
-    while (!(current = iterator.next()).done) {
-        accumulatedValue = iteratee(accumulatedValue, current.value, env);
-    }
+  /* tslint:disable:no-conditional-assignment */
+  while (!(current = iterator.next()).done) {
+    accumulatedValue = iteratee(accumulatedValue, current.value, env);
+  }
 
-    return toIterator([accumulatedValue]);
+  return toIterator([accumulatedValue]);
 }

@@ -1,19 +1,14 @@
 {
-  "extends": "tslint:latest",
+  "extends": ["tslint:recommended", "tslint-config-prettier"],
   "rules": {
     "only-arrow-functions": false,
-    "space-before-function-paren": false,
     "unified-signatures": false,
-    "max-line-length": false,
-    "quotemark": [
-      true,
-      "double"
-    ],
-    "trailing-comma": [true, { "multiline": "never", "singleline": "never" }],
+    "quotemark": [true, "double"],
     "ordered-imports": false,
     "no-string-literal": false,
     "arrow-parens": false,
     "max-classes-per-file": false,
-    "array-type": false
+    "array-type": false,
+    "ban-types": false
   }
 }

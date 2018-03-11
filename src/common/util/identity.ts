@@ -4,5 +4,5 @@
  * @param T type of the element
  */
 export function identity<T>(element: T): T {
-    return element;
+  return element;
 }

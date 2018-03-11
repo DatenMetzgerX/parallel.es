@@ -6,18 +6,18 @@
  * @returns iterator with the values [start, end)
  */
 export function rangeIterator(start: number, end: number, step: number): Iterator<number> {
-    const distance = end - start;
-    let length = Math.max(Math.floor(distance / (step || 1)), 0);
-    let next = start;
+  const distance = end - start;
+  let length = Math.max(Math.floor(distance / (step || 1)), 0);
+  let next = start;
 
-    return {
-        next(): IteratorResult<number> {
-            const current = next;
-            next = next + step;
-            if (length-- !== 0) {
-                return { done: false, value: current };
-            }
-            return { done: true } as IteratorResult<number>;
-        }
-    };
+  return {
+    next(): IteratorResult<number> {
+      const current = next;
+      next = next + step;
+      if (length-- !== 0) {
+        return { done: false, value: current };
+      }
+      return { done: true } as IteratorResult<number>;
+    }
+  };
 }

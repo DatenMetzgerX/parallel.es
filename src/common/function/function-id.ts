@@ -7,15 +7,15 @@
  * Identifier for a serialized function
  */
 export interface IFunctionId {
-    /**
-     * The globally unique identifier
-     */
-    identifier: string;
+  /**
+   * The globally unique identifier
+   */
+  identifier: string;
 
-    /**
-     * Flag that indicates that this is a function id
-     */
-    _______isFunctionId: boolean;
+  /**
+   * Flag that indicates that this is a function id
+   */
+  _______isFunctionId: boolean;
 }
 
 /**
@@ -25,10 +25,10 @@ export interface IFunctionId {
  * @returns the function id
  */
 export function functionId(namespace: string, id: number): IFunctionId {
-    return {
-        _______isFunctionId: true,
-        identifier: `${namespace}-${id}`
-    };
+  return {
+    _______isFunctionId: true,
+    identifier: `${namespace}-${id}`
+  };
 }
 
 /**
@@ -37,5 +37,5 @@ export function functionId(namespace: string, id: number): IFunctionId {
  * @returns true if the object is  a function id
  */
 export function isFunctionId(obj: any): obj is IFunctionId {
-    return !!obj && obj._______isFunctionId === true;
+  return !!obj && obj._______isFunctionId === true;
 }

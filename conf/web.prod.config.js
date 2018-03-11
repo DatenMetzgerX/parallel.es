@@ -1,25 +1,23 @@
-var webpack = require("webpack");
-var Config = require("webpack-config").Config;
-var CompressionPlugin = require("compression-webpack-plugin");
+const webpack = require("webpack");
+const Config = require("webpack-config").Config;
+const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
 
-module.exports = new Config().extend("conf/web.es5.config.js").merge({
-    entry: {
-        "browser-commonjs": "./src/api/browser-commonjs"
-    },
-    devtool: "#source-map",
-    plugins: [
-        new webpack.optimize.OccurrenceOrderPlugin(),
-        new webpack.optimize.UglifyJsPlugin({
-            sourceMap: true,
-            comments: /WORKER_SLAVE_STATIC_FUNCTIONS_PLACEHOLDER/,
-            mangle: {
-                except: ["slaveFunctionLookupTable"]
-            }
-        }),
-        new CompressionPlugin({
-            asset: "[path].gz[query]",
-            algorithm: "gzip",
-            test: /\.js$|\.css$|\.html$/
-        })
+module.exports = new Config().extend("conf/web.base.config.js").merge({
+  devtool: "#source-map",
+  mode: "production",
+  optimization: {
+    minimizer: [
+      new UglifyJsPlugin({
+        sourceMap: true,
+        uglifyOptions: {
+          output: {
+            comments: /WORKER_SLAVE_STATIC_FUNCTIONS_PLACEHOLDER/
+          },
+          mangle: {
+            reserved: ["slaveFunctionLookupTable"]
+          }
+        }
+      })
     ]
+  }
 });

@@ -3,8 +3,8 @@
  */
 /** */
 
-import {ITaskDefinition} from "./task-definition";
-import {IPromise} from "../util/promise";
+import { ITaskDefinition } from "./task-definition";
+import { IPromise } from "../util/promise";
 
 /**
  * Represents a task that has been scheduled on a {@link IThreadPool} or is actually in execution.
@@ -13,26 +13,25 @@ import {IPromise} from "../util/promise";
  * @param T type of the computed result
  */
 export interface ITask<T> extends IPromise<T> {
+  /**
+   * The underlining task definition that describes the executed task
+   */
+  definition: ITaskDefinition;
 
-    /**
-     * The underlining task definition that describes the executed task
-     */
-    definition: ITaskDefinition;
+  /**
+   * Indicator if this task has been canceled.
+   */
+  isCanceled: boolean;
 
-    /**
-     * Indicator if this task has been canceled.
-     */
-    isCanceled: boolean;
+  /**
+   * Indicator if this task should be canceled but has not yet
+   */
+  readonly isCancellationRequested: boolean;
 
-    /**
-     * Indicator if this task should be canceled but has not yet
-     */
-    readonly isCancellationRequested: boolean;
-
-    /**
-     * Cancels the given task. Triggers an error that the task has been canceled.
-     * This has only an effect if the task has not yet been scheduled. An already scheduled task will compute till the end, but
-     * the then handler will not be invoked.
-     */
-    cancel(): void;
+  /**
+   * Cancels the given task. Triggers an error that the task has been canceled.
+   * This has only an effect if the task has not yet been scheduled. An already scheduled task will compute till the end, but
+   * the then handler will not be invoked.
+   */
+  cancel(): void;
 }

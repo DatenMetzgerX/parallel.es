@@ -1,101 +1,101 @@
-import {ITaskDefinition} from "../task/task-definition";
-import {IFunctionDefinition} from "../function/function-defintion";
-import {IFunctionId} from "../function/function-id";
+import { ITaskDefinition } from "../task/task-definition";
+import { IFunctionDefinition } from "../function/function-defintion";
+import { IFunctionId } from "../function/function-id";
 
 /**
  * Message types
  */
 export const enum WorkerMessageType {
-    /**
-     * Sent from the worker facade to the worker slave to initialize the slave.
-     */
-    InitializeWorker,
+  /**
+   * Sent from the worker facade to the worker slave to initialize the slave.
+   */
+  InitializeWorker,
 
-    /**
-     * Sent from the worker facade to the worker slave to schedule a new task on the slave.
-     */
-    ScheduleTask,
+  /**
+   * Sent from the worker facade to the worker slave to schedule a new task on the slave.
+   */
+  ScheduleTask,
 
-    /**
-     * Send from the worker slave to the worker thread to request the definition of a function needed to execute a scheduled task
-     */
-    FunctionRequest,
+  /**
+   * Send from the worker slave to the worker thread to request the definition of a function needed to execute a scheduled task
+   */
+  FunctionRequest,
 
-    /**
-     * Send from the worker thread to the worker slave as response to a {@link WorkerMessageType.FunctionRequest}. Includes
-     * the definitions of all requested functions
-     */
-    FunctionResponse,
+  /**
+   * Send from the worker thread to the worker slave as response to a {@link WorkerMessageType.FunctionRequest}. Includes
+   * the definitions of all requested functions
+   */
+  FunctionResponse,
 
-    /**
-     * Sent from the worker slave to the worker thread containing the computed result
-     */
-    WorkerResult,
+  /**
+   * Sent from the worker slave to the worker thread containing the computed result
+   */
+  WorkerResult,
 
-    /**
-     * Sent from the worker slave to the worker thread for the case an error occurred during the evaluation of the scheduled task.
-     */
-    FunctionExecutionError,
+  /**
+   * Sent from the worker slave to the worker thread for the case an error occurred during the evaluation of the scheduled task.
+   */
+  FunctionExecutionError,
 
-    /**
-     * Sent from the worker thread to the worker slave to request the slave to terminate.
-     */
-    Stop
+  /**
+   * Sent from the worker thread to the worker slave to request the slave to terminate.
+   */
+  Stop
 }
 
 /**
  * Message that is exchanged between a worker slave and the worker thread.
  */
 export interface IWorkerMessage {
-    /**
-     * The type of the message.
-     */
-    type: WorkerMessageType;
+  /**
+   * The type of the message.
+   */
+  type: WorkerMessageType;
 }
 
 /**
  * Sent to initialize the worker slave and assigns the given unique id
  */
 export interface IInitializeWorkerMessage extends IWorkerMessage {
-    /**
-     * Unique id of the worker (facade / slave)
-     */
-    workerId: number;
+  /**
+   * Unique id of the worker (facade / slave)
+   */
+  workerId: number;
 }
 
 /**
  * Schedules the given task on the worker slave.
  */
 export interface IScheduleTaskMessage extends IWorkerMessage {
-    /**
-     * Task to execute on the worker slave
-     */
-    task: ITaskDefinition;
+  /**
+   * Task to execute on the worker slave
+   */
+  task: ITaskDefinition;
 }
 
 /**
  * Sent by the worker slave to request the function definitions with the given ids.
  */
 export interface IFunctionRequest extends IWorkerMessage {
-    /**
-     * The ids of the requested functions
-     */
-    functionIds: IFunctionId[];
+  /**
+   * The ids of the requested functions
+   */
+  functionIds: IFunctionId[];
 }
 
 /**
  * Response to a {@link IFunctionRequest}. Contains the definitions for all requested functions.
  */
 export interface IFunctionResponse extends IWorkerMessage {
-    /**
-     * The definition of the requested functions
-     */
-    functions: IFunctionDefinition[];
+  /**
+   * The definition of the requested functions
+   */
+  functions: IFunctionDefinition[];
 
-    /**
-     * Array containing the ids of the functions that could not be resolved
-     */
-    missingFunctions: IFunctionId[];
+  /**
+   * Array containing the ids of the functions that could not be resolved
+   */
+  missingFunctions: IFunctionId[];
 }
 
 /**
@@ -103,20 +103,20 @@ export interface IFunctionResponse extends IWorkerMessage {
  * Thereafter, the worker slave is ready to accept further tasks.
  */
 export interface IWorkerResultMessage extends IWorkerMessage {
-    /**
-     * The computed result for the {@link IScheduleTaskMessage}
-     */
-    result: any;
+  /**
+   * The computed result for the {@link IScheduleTaskMessage}
+   */
+  result: any;
 }
 
 /**
  * Sent from the worker to report an error during the execution of the function.
  */
 export interface IFunctionExecutionError extends IWorkerMessage {
-    /**
-     * The occurred error. Not an instance of Error. Error is not cloneable.
-     */
-    error: any;
+  /**
+   * The occurred error. Not an instance of Error. Error is not cloneable.
+   */
+  error: any;
 }
 
 /**
@@ -125,7 +125,7 @@ export interface IFunctionExecutionError extends IWorkerMessage {
  * @returns the initialize worker message
  */
 export function initializeWorkerMessage(id: number): IInitializeWorkerMessage {
-    return { type: WorkerMessageType.InitializeWorker, workerId: id };
+  return { type: WorkerMessageType.InitializeWorker, workerId: id };
 }
 
 /**
@@ -134,7 +134,7 @@ export function initializeWorkerMessage(id: number): IInitializeWorkerMessage {
  * @returns the schedule message
  */
 export function scheduleTaskMessage(task: ITaskDefinition): IScheduleTaskMessage {
-    return { task, type: WorkerMessageType.ScheduleTask};
+  return { task, type: WorkerMessageType.ScheduleTask };
 }
 
 /**
@@ -144,7 +144,10 @@ export function scheduleTaskMessage(task: ITaskDefinition): IScheduleTaskMessage
  * @returns the function request message
  */
 export function requestFunctionMessage(functionId: IFunctionId, ...otherFunctionIds: IFunctionId[]): IFunctionRequest {
-    return { functionIds: [functionId, ...otherFunctionIds], type: WorkerMessageType.FunctionRequest };
+  return {
+    functionIds: [functionId, ...otherFunctionIds],
+    type: WorkerMessageType.FunctionRequest
+  };
 }
 
 /**
@@ -152,8 +155,15 @@ export function requestFunctionMessage(functionId: IFunctionId, ...otherFunction
  * @param functions the function definitions to respond to the worker slave
  * @returns the function response message
  */
-export function functionResponseMessage(functions: IFunctionDefinition[], ...missingFunctionIds: IFunctionId[]): IFunctionResponse {
-    return { functions, missingFunctions: missingFunctionIds, type: WorkerMessageType.FunctionResponse };
+export function functionResponseMessage(
+  functions: IFunctionDefinition[],
+  ...missingFunctionIds: IFunctionId[]
+): IFunctionResponse {
+  return {
+    functions,
+    missingFunctions: missingFunctionIds,
+    type: WorkerMessageType.FunctionResponse
+  };
 }
 
 /**
@@ -162,7 +172,7 @@ export function functionResponseMessage(functions: IFunctionDefinition[], ...mis
  * @returns the message
  */
 export function workerResultMessage(result: any): IWorkerResultMessage {
-    return { result, type: WorkerMessageType.WorkerResult };
+  return { result, type: WorkerMessageType.WorkerResult };
 }
 
 /**
@@ -171,13 +181,13 @@ export function workerResultMessage(result: any): IWorkerResultMessage {
  * @returns the message
  */
 export function functionExecutionError(error: Error): IFunctionExecutionError {
-    const errorObject: {[prop: string]: string} = {};
+  const errorObject: { [prop: string]: string } = {};
 
-    for (const prop of Object.getOwnPropertyNames(error)) {
-        errorObject[prop] = JSON.stringify((error as any)[prop]);
-    }
+  for (const prop of Object.getOwnPropertyNames(error)) {
+    errorObject[prop] = JSON.stringify((error as any)[prop]);
+  }
 
-    return { error: errorObject, type: WorkerMessageType.FunctionExecutionError };
+  return { error: errorObject, type: WorkerMessageType.FunctionExecutionError };
 }
 
 /**
@@ -185,7 +195,7 @@ export function functionExecutionError(error: Error): IFunctionExecutionError {
  * @returns the message
  */
 export function stopMessage(): IWorkerMessage {
-    return { type: WorkerMessageType.Stop };
+  return { type: WorkerMessageType.Stop };
 }
 
 /**
@@ -194,7 +204,7 @@ export function stopMessage(): IWorkerMessage {
  * @returns {boolean} {@code true} if the message is an {@link IScheduleTaskMessage}
  */
 export function isScheduleTask(message: IWorkerMessage): message is IScheduleTaskMessage {
-    return message.type === WorkerMessageType.ScheduleTask;
+  return message.type === WorkerMessageType.ScheduleTask;
 }
 
 /**
@@ -203,7 +213,7 @@ export function isScheduleTask(message: IWorkerMessage): message is IScheduleTas
  * @returns {boolean} {@code true} if the message is an {@link IInitializeWorkerMessage}
  */
 export function isInitializeMessage(message: IWorkerMessage): message is IInitializeWorkerMessage {
-    return message.type === WorkerMessageType.InitializeWorker;
+  return message.type === WorkerMessageType.InitializeWorker;
 }
 
 /**
@@ -212,7 +222,7 @@ export function isInitializeMessage(message: IWorkerMessage): message is IInitia
  * @returns {boolean} {@code true} if the message is an {@link IFunctionRequest}
  */
 export function isFunctionRequest(message: IWorkerMessage): message is IFunctionRequest {
-    return message.type === WorkerMessageType.FunctionRequest;
+  return message.type === WorkerMessageType.FunctionRequest;
 }
 
 /**
@@ -221,7 +231,7 @@ export function isFunctionRequest(message: IWorkerMessage): message is IFunction
  * @returns {boolean} {@code true} if the message is an {@link IFunctionResponse}
  */
 export function isFunctionResponse(message: IWorkerMessage): message is IFunctionResponse {
-    return message.type === WorkerMessageType.FunctionResponse;
+  return message.type === WorkerMessageType.FunctionResponse;
 }
 
 /**
@@ -230,7 +240,7 @@ export function isFunctionResponse(message: IWorkerMessage): message is IFunctio
  * @returns {boolean} {@code true} if the message is an {@link IWorkerResultMessage}
  */
 export function isWorkerResult(message: IWorkerMessage): message is IWorkerResultMessage {
-    return message.type === WorkerMessageType.WorkerResult;
+  return message.type === WorkerMessageType.WorkerResult;
 }
 
 /**
@@ -239,7 +249,7 @@ export function isWorkerResult(message: IWorkerMessage): message is IWorkerResul
  * @returns {boolean} {@code true} if the message is an {@link IFunctionExecutionError}
  */
 export function isFunctionExecutionError(message: IWorkerMessage): message is IFunctionExecutionError {
-    return message.type === WorkerMessageType.FunctionExecutionError;
+  return message.type === WorkerMessageType.FunctionExecutionError;
 }
 
 /**
@@ -248,5 +258,5 @@ export function isFunctionExecutionError(message: IWorkerMessage): message is IF
  * @returns {boolean} {@code true} if the message is a stop message
  */
 export function isStopMesssage(message: IWorkerMessage): boolean {
-    return message.type === WorkerMessageType.Stop;
+  return message.type === WorkerMessageType.Stop;
 }

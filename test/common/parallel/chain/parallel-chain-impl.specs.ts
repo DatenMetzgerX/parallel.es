@@ -1,284 +1,272 @@
-import {IParallelGenerator} from "../../../../src/common/parallel/generator/parallel-generator";
-import {FunctionCall} from "../../../../src/common/function/function-call";
-import {IDefaultInitializedParallelOptions} from "../../../../src/common/parallel";
-import {ParallelCollectionGenerator} from "../../../../src/common/parallel/generator/parallel-collection-generator";
-import {IParallelChainState} from "../../../../src/common/parallel/chain/parallel-chain-state";
-import {ParallelChainImpl} from "../../../../src/common/parallel/chain/parallel-chain-impl";
-import {IParallelChain} from "../../../../src/common/parallel/chain/parallel-chain";
-import {ParallelStream} from "../../../../src/common/parallel/stream/parallel-stream-impl";
-import {ParallelWorkerFunctionIds} from "../../../../src/common/parallel/slave/parallel-worker-functions";
+import { FunctionCall } from "../../../../src/common/function/function-call";
+import { IParallelChainState } from "../../../../src/common/parallel/chain/parallel-chain-state";
+import { ParallelChainImpl } from "../../../../src/common/parallel/chain/parallel-chain-impl";
+import { IParallelChain } from "../../../../src/common/parallel/chain/parallel-chain";
+import { ParallelStream } from "../../../../src/common/parallel/stream/parallel-stream-impl";
+import { ParallelWorkerFunctionIds } from "../../../../src/common/parallel/slave/parallel-worker-functions";
 
-describe("ParallelChainImpl", function () {
-    let generator: IParallelGenerator;
-    let options: IDefaultInitializedParallelOptions;
-    let state: IParallelChainState<number>;
-    let stateResolveSpy: jasmine.Spy;
-    let chainOperationSpy: jasmine.Spy;
-    let addEnvironmentSpy: jasmine.Spy;
+describe("ParallelChainImpl", function() {
+  let state: IParallelChainState<number>;
+  let stateResolveSpy: jasmine.Spy;
+  let chainOperationSpy: jasmine.Spy;
+  let addEnvironmentSpy: jasmine.Spy;
 
-    beforeEach(function () {
-        generator = new ParallelCollectionGenerator([1, 2, 3, 4, 5]);
-        stateResolveSpy = jasmine.createSpy("state.resolve");
-        chainOperationSpy = jasmine.createSpy("state.chainOperation");
-        addEnvironmentSpy = jasmine.createSpy("state.addEnvironment");
+  beforeEach(function() {
+    stateResolveSpy = jasmine.createSpy("state.resolve");
+    chainOperationSpy = jasmine.createSpy("state.chainOperation");
+    addEnvironmentSpy = jasmine.createSpy("state.addEnvironment");
 
-        state = {
-            addEnvironment: addEnvironmentSpy,
-            chainOperation: chainOperationSpy,
-            resolve: stateResolveSpy
-        } as any;
+    state = {
+      addEnvironment: addEnvironmentSpy,
+      chainOperation: chainOperationSpy,
+      resolve: stateResolveSpy
+    } as any;
+  });
 
-        options = {
-            functionCallSerializer: undefined as any,
-            scheduler: undefined as any,
-            threadPool: undefined as any
-        };
+  describe("inEnvironment", function() {
+    it("adds the given object hash to the existing environment", function() {
+      // arrange
+      const chain = new ParallelChainImpl(state);
+
+      // act
+      chain.inEnvironment({ test: 10 });
+
+      // assert
+      expect(addEnvironmentSpy).toHaveBeenCalledWith({ test: 10 });
     });
 
-    describe("inEnvironment", function () {
-        it("adds the given object hash to the existing environment", function () {
-             // arrange
-            const chain = new ParallelChainImpl(state);
+    it("adds the given environment provider to the existing environment", function() {
+      // arrange
+      const chain = new ParallelChainImpl(state);
+      const environmentProvider = (value: number) => ({ value });
 
-            // act
-            chain.inEnvironment({ test: 10 });
+      // act
+      chain.inEnvironment(environmentProvider, 10);
 
-            // assert
-            expect(addEnvironmentSpy).toHaveBeenCalledWith({ test: 10 });
-        });
+      // assert
+      expect(addEnvironmentSpy).toHaveBeenCalledWith(FunctionCall.create(environmentProvider, 10));
+    });
+  });
 
-        it("adds the given environment provider to the existing environment", function () {
-            // arrange
-            const chain = new ParallelChainImpl(state);
-            const environmentProvider = (value: number) => ({ value });
+  describe("map", function() {
+    it("adds the map operation to the operations to perform", function() {
+      // arrange
+      const mapper = (value: number) => value * 2;
+      const chain = new ParallelChainImpl(state);
 
-            // act
-            chain.inEnvironment(environmentProvider, 10);
+      // act
+      chain.map(mapper);
 
-            // assert
-            expect(addEnvironmentSpy).toHaveBeenCalledWith(FunctionCall.create(environmentProvider, 10));
-        });
+      // assert
+      expect(chainOperationSpy).toHaveBeenCalledWith({
+        iteratee: FunctionCall.createUnchecked(mapper),
+        iterator: FunctionCall.create(ParallelWorkerFunctionIds.MAP)
+      });
     });
 
-    describe("map", function () {
-        it("adds the map operation to the operations to perform", function () {
-            // arrange
-            const mapper = (value: number) => value * 2;
-            const chain = new ParallelChainImpl(state);
+    it("changes the state of the chain to the state returned by chainOperation", function() {
+      // arrange
+      const newState: IParallelChainState<number> = {} as any;
+      const chain = new ParallelChainImpl(state);
+      chainOperationSpy.and.returnValue(newState);
 
-            // act
-            chain.map(mapper);
+      // act, assert
+      const mappedChain = chain.map(value => value * 2);
 
-            // assert
-            expect(chainOperationSpy).toHaveBeenCalledWith({
-                iteratee: FunctionCall.createUnchecked(mapper),
-                iterator: FunctionCall.create(ParallelWorkerFunctionIds.MAP)
-            });
-        });
+      // assert
+      expect(getChainState(mappedChain)).toEqual(newState);
+    });
+  });
 
-        it("changes the state of the chain to the state returned by chainOperation", function () {
-            // arrange
-            const newState = {};
-            const chain = new ParallelChainImpl(state);
-            chainOperationSpy.and.returnValue(newState);
+  describe("filter", function() {
+    it("adds the filter operation to the operations to perform", function() {
+      // arrange
+      const filter = (value: number) => value % 2 === 0;
+      const chain = new ParallelChainImpl(state);
 
-            // act, assert
-            const mappedChain = chain.map(value => value * 2);
+      // act
+      chain.filter(filter);
 
-            // assert
-            expect(getChainState(mappedChain)).toEqual(newState);
-        });
+      // assert
+      expect(chainOperationSpy).toHaveBeenCalledWith({
+        iteratee: FunctionCall.createUnchecked(filter),
+        iterator: FunctionCall.create(ParallelWorkerFunctionIds.FILTER)
+      });
     });
 
-    describe("filter", function () {
-        it("adds the filter operation to the operations to perform", function () {
-            // arrange
-            const filter = (value: number) => value % 2 === 0;
-            const chain = new ParallelChainImpl(state);
+    it("changes the state of the chain to the state returned by chainOperation", function() {
+      // arrange
+      const newState: IParallelChainState<number> = {} as any;
+      const chain = new ParallelChainImpl(state);
+      chainOperationSpy.and.returnValue(newState);
 
-            // act
-            chain.filter(filter);
+      // act, assert
+      const filteredChain = chain.filter(value => value % 2 === 0);
 
-            // assert
-            expect(chainOperationSpy).toHaveBeenCalledWith({
-                iteratee: FunctionCall.createUnchecked(filter),
-                iterator: FunctionCall.create(ParallelWorkerFunctionIds.FILTER)
-            });
-        });
+      // assert
+      expect(getChainState(filteredChain)).toEqual(newState);
+    });
+  });
 
-        it("changes the state of the chain to the state returned by chainOperation", function () {
-            // arrange
-            const newState = {};
-            const chain = new ParallelChainImpl(state);
-            chainOperationSpy.and.returnValue(newState);
+  describe("reduce", function() {
+    it("adds the reduce operation to the operations to perform", function() {
+      // arrange
+      const add = (memo: number, value: number) => memo + value;
+      const chain = new ParallelChainImpl(state);
 
-            // act, assert
-            const filteredChain = chain.filter(value => value % 2 === 0);
+      const reducedStream = jasmine.createSpyObj("reducedStream", ["then"]);
+      const resolvedState = { stream: reducedStream };
+      const reducedState = { resolve: jasmine.createSpy("resolve").and.returnValue(resolvedState) };
+      chainOperationSpy.and.returnValue(reducedState);
+      spyOn(ParallelStream, "transform");
 
-            // assert
-            expect(getChainState(filteredChain)).toEqual(newState);
-        });
+      // act
+      chain.reduce(0, add);
+
+      // assert
+      expect(chainOperationSpy).toHaveBeenCalledWith({
+        iteratee: FunctionCall.createUnchecked(add),
+        iterator: FunctionCall.create(ParallelWorkerFunctionIds.REDUCE, 0)
+      });
     });
 
-    describe("reduce", function () {
-        it("adds the reduce operation to the operations to perform", function () {
-            // arrange
-            const add = (memo: number, value: number) => memo + value;
-            const chain = new ParallelChainImpl(state);
+    it("returns the default value if the tasks returned an empty array", function(done) {
+      // arrange
+      const add = (memo: number, value: number) => memo + value;
+      const chain = new ParallelChainImpl(state);
 
-            const reducedStream = jasmine.createSpyObj("reducedStream", [ "then" ]);
-            const resolvedState = { stream: reducedStream };
-            const reducedState = { resolve: jasmine.createSpy("resolve").and.returnValue(resolvedState) };
-            chainOperationSpy.and.returnValue(reducedState);
-            spyOn(ParallelStream, "transform");
+      const reducedStream = jasmine.createSpyObj("reducedStream", ["subscribe"]);
+      const resolvedState = { stream: reducedStream };
+      const reducedState = { resolve: jasmine.createSpy("resolve").and.returnValue(resolvedState) };
+      chainOperationSpy.and.returnValue(reducedState);
 
-            // act
-            chain.reduce(0, add);
+      // act, assert
+      chain.reduce(55, add).then(result => {
+        expect(result).toEqual(55);
+        done();
+      }, done.fail);
 
-            // assert
-            expect(chainOperationSpy).toHaveBeenCalledWith({
-                iteratee: FunctionCall.createUnchecked(add),
-                iterator: FunctionCall.create(ParallelWorkerFunctionIds.REDUCE, 0)
-            });
-        });
-
-        it("returns the default value if the tasks returned an empty array", function (done) {
-            // arrange
-            const add = (memo: number, value: number) => memo + value;
-            const chain = new ParallelChainImpl(state);
-
-            const reducedStream = jasmine.createSpyObj("reducedStream", [ "subscribe" ]);
-            const resolvedState = { stream: reducedStream };
-            const reducedState = { resolve: jasmine.createSpy("resolve").and.returnValue(resolvedState) };
-            chainOperationSpy.and.returnValue(reducedState);
-
-            // act, assert
-            chain.reduce(55, add).then(result => {
-                expect(result).toEqual(55);
-                done();
-            }, done.fail);
-
-            // call then callback
-            reducedStream.subscribe.calls.argsFor(0)[2].apply(undefined, [[]]);
-        });
-
-        it("returns the summed up value if the task returns values", function (done) {
-            // arrange
-            const add = (memo: number, value: number) => memo + value;
-            const chain = new ParallelChainImpl(state);
-
-            const reducedStream = jasmine.createSpyObj("reducedStream", [ "subscribe" ]);
-            const resolvedState = { stream: reducedStream };
-            const reducedState = { resolve: jasmine.createSpy("resolve").and.returnValue(resolvedState) };
-            chainOperationSpy.and.returnValue(reducedState);
-
-            // act, assert
-            chain.reduce(55, add).then(result => {
-                expect(result).toEqual(10 + 15);
-                done();
-            }, done.fail);
-
-            // call then callback
-            reducedStream.subscribe.calls.argsFor(0)[2].apply(undefined, [[10, 15]]);
-        });
+      // call then callback
+      reducedStream.subscribe.calls.argsFor(0)[2].apply(undefined, [[]]);
     });
 
-    describe("then", function () {
-        it("resolves the state", function () {
-            // arrange
-            const chain = new ParallelChainImpl(state);
-            const stream = jasmine.createSpyObj("stream", ["then"]);
-            stateResolveSpy.and.returnValue({ stream });
+    it("returns the summed up value if the task returns values", function(done) {
+      // arrange
+      const add = (memo: number, value: number) => memo + value;
+      const chain = new ParallelChainImpl(state);
 
-            // act
-            chain.then(() => undefined);
+      const reducedStream = jasmine.createSpyObj("reducedStream", ["subscribe"]);
+      const resolvedState = { stream: reducedStream };
+      const reducedState = { resolve: jasmine.createSpy("resolve").and.returnValue(resolvedState) };
+      chainOperationSpy.and.returnValue(reducedState);
 
-            // assert
-            expect(stateResolveSpy).toHaveBeenCalled();
-        });
+      // act, assert
+      chain.reduce(55, add).then(result => {
+        expect(result).toEqual(10 + 15);
+        done();
+      }, done.fail);
 
-        it("registers the callbacks", function () {
-            // arrange
-            const chain = new ParallelChainImpl(state);
-            const stream = jasmine.createSpyObj("stream", ["then"]);
-            stateResolveSpy.and.returnValue({ stream });
+      // call then callback
+      reducedStream.subscribe.calls.argsFor(0)[2].apply(undefined, [[10, 15]]);
+    });
+  });
 
-            const success = () => undefined;
-            const reject = () => undefined;
+  describe("then", function() {
+    it("resolves the state", function() {
+      // arrange
+      const chain = new ParallelChainImpl(state);
+      const stream = jasmine.createSpyObj("stream", ["then"]);
+      stateResolveSpy.and.returnValue({ stream });
 
-            // act
-            chain.then(success, reject);
+      // act
+      chain.then(() => undefined);
 
-            // assert
-            expect(stream.then).toHaveBeenCalledWith(success, reject);
-        });
+      // assert
+      expect(stateResolveSpy).toHaveBeenCalled();
     });
 
-    describe("catch", function () {
-        it("resolves the state", function () {
-            // arrange
-            const chain = new ParallelChainImpl(state);
-            const stream = jasmine.createSpyObj("stream", ["catch"]);
-            stateResolveSpy.and.returnValue({ stream });
+    it("registers the callbacks", function() {
+      // arrange
+      const chain = new ParallelChainImpl(state);
+      const stream = jasmine.createSpyObj("stream", ["then"]);
+      stateResolveSpy.and.returnValue({ stream });
 
-            // act
-            chain.catch(() => undefined);
+      const success = () => undefined;
+      const reject = () => undefined;
 
-            // assert
-            expect(stateResolveSpy).toHaveBeenCalled();
-        });
+      // act
+      chain.then(success, reject);
 
-        it("registers the callback", function () {
-            // arrange
-            const chain = new ParallelChainImpl(state);
-            const stream = jasmine.createSpyObj("stream", ["catch"]);
-            stateResolveSpy.and.returnValue({ stream });
+      // assert
+      expect(stream.then).toHaveBeenCalledWith(success, reject);
+    });
+  });
 
-            const reject = () => undefined;
+  describe("catch", function() {
+    it("resolves the state", function() {
+      // arrange
+      const chain = new ParallelChainImpl(state);
+      const stream = jasmine.createSpyObj("stream", ["catch"]);
+      stateResolveSpy.and.returnValue({ stream });
 
-            // act
-            chain.catch(reject);
+      // act
+      chain.catch(() => undefined);
 
-            // assert
-            expect(stream.catch).toHaveBeenCalledWith(reject);
-        });
+      // assert
+      expect(stateResolveSpy).toHaveBeenCalled();
     });
 
-    describe("subscribe", function () {
-        it("resolves the state", function () {
-            // arrange
-            const chain = new ParallelChainImpl(state);
-            const stream = jasmine.createSpyObj("stream", ["subscribe"]);
-            stateResolveSpy.and.returnValue({ stream });
+    it("registers the callback", function() {
+      // arrange
+      const chain = new ParallelChainImpl(state);
+      const stream = jasmine.createSpyObj("stream", ["catch"]);
+      stateResolveSpy.and.returnValue({ stream });
 
-            // act
-            chain.subscribe(() => undefined);
+      const reject = () => undefined;
 
-            // assert
-            expect(stateResolveSpy).toHaveBeenCalled();
-        });
+      // act
+      chain.catch(reject);
 
-        it("registers the next, error and complete callbacks", function () {
-            // arrange
-            const chain = new ParallelChainImpl(state);
-            const stream = jasmine.createSpyObj("stream", ["subscribe"]);
-            stateResolveSpy.and.returnValue({ stream });
-
-            const next = () => undefined;
-            const error = () => undefined;
-            const complete = () => undefined;
-
-            // act
-            chain.subscribe(next, error, complete);
-
-            // assert
-            expect(stream.subscribe).toHaveBeenCalledWith(next, error, complete);
-        });
+      // assert
+      expect(stream.catch).toHaveBeenCalledWith(reject);
     });
+  });
+
+  describe("subscribe", function() {
+    it("resolves the state", function() {
+      // arrange
+      const chain = new ParallelChainImpl(state);
+      const stream = jasmine.createSpyObj("stream", ["subscribe"]);
+      stateResolveSpy.and.returnValue({ stream });
+
+      // act
+      chain.subscribe(() => undefined);
+
+      // assert
+      expect(stateResolveSpy).toHaveBeenCalled();
+    });
+
+    it("registers the next, error and complete callbacks", function() {
+      // arrange
+      const chain = new ParallelChainImpl(state);
+      const stream = jasmine.createSpyObj("stream", ["subscribe"]);
+      stateResolveSpy.and.returnValue({ stream });
+
+      const next = () => undefined;
+      const error = () => undefined;
+      const complete = () => undefined;
+
+      // act
+      chain.subscribe(next, error, complete);
+
+      // assert
+      expect(stream.subscribe).toHaveBeenCalledWith(next, error, complete);
+    });
+  });
 });
 
 function getChainState<TIn, TEnv, TOut>(chain: IParallelChain<TIn, TEnv, TOut>): IParallelChainState<TOut> {
-    expect(chain).toEqual(jasmine.any(ParallelChainImpl));
+  expect(chain).toEqual(jasmine.any(ParallelChainImpl));
 
-    return (chain as ParallelChainImpl<TIn, TEnv, TOut>).state;
+  return (chain as ParallelChainImpl<TIn, TEnv, TOut>).state;
 }

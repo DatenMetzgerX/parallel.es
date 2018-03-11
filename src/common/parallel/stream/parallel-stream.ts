@@ -3,7 +3,7 @@
  */
 /** needed, typedoc issue */
 
-import {IPromise} from "../../util/promise";
+import { IPromise } from "../../util/promise";
 
 /**
  * Parallel processing stream that allows access to the sub results or end result of a {@link IParallelJob}
@@ -19,12 +19,16 @@ import {IPromise} from "../../util/promise";
  * @param TEndResult the joined result of all tasks.
  */
 export interface IParallelStream<TSubResult, TEndResult> extends IPromise<TEndResult> {
-    /**
-     * Registers the given next, error and complete handler.
-     * @param onNext is called with the sub result produced by a completed task. The sub result of this task, the relative
-     * task number and the values processed by each worker (max) is passed to the onNext handler.
-     * @param onError is invoked whenever any task has failed.
-     * @param onComplete is invoked with the joined result when all tasks have completed
-     */
-    subscribe(onNext: (this: void, subResult: TSubResult, taskIndex: number, valuesPerWorker: number) => void, onError?: (this: void, reason: any) => void, onComplete?: (this: void, result: TEndResult) => void): IParallelStream<TSubResult, TEndResult>;
+  /**
+   * Registers the given next, error and complete handler.
+   * @param onNext is called with the sub result produced by a completed task. The sub result of this task, the relative
+   * task number and the values processed by each worker (max) is passed to the onNext handler.
+   * @param onError is invoked whenever any task has failed.
+   * @param onComplete is invoked with the joined result when all tasks have completed
+   */
+  subscribe(
+    onNext: (this: void, subResult: TSubResult, taskIndex: number, valuesPerWorker: number) => void,
+    onError?: (this: void, reason: any) => void,
+    onComplete?: (this: void, result: TEndResult) => void
+  ): IParallelStream<TSubResult, TEndResult>;
 }

@@ -3,7 +3,7 @@
  */
 /** */
 
-import {ITaskDefinition} from "../task/task-definition";
+import { ITaskDefinition } from "../task/task-definition";
 
 /**
  * Abstraction of a thread that is used to execute a {@link ITask}. A worker thread
@@ -15,24 +15,23 @@ import {ITaskDefinition} from "../task/task-definition";
  * Acts as abstraction of the actually used environment (node, browser...)
  */
 export interface IWorkerThread {
+  /**
+   * Unique id of this worker thread
+   */
+  id: number;
 
-    /**
-     * Unique id of this worker thread
-     */
-    id: number;
+  /**
+   * Executes the given task on this worker thread. The given callback is invoked when the task has completed
+   * @param task the task to execute
+   * @param callback the callback to invoke when the execution has complted. The callback is invoked either with an error
+   * or a result, depending on the outocome of the execution
+   */
+  run(task: ITaskDefinition, callback: (error: any, result: any) => void): void;
 
-    /**
-     * Executes the given task on this worker thread. The given callback is invoked when the task has completed
-     * @param task the task to execute
-     * @param callback the callback to invoke when the execution has complted. The callback is invoked either with an error
-     * or a result, depending on the outocome of the execution
-     */
-    run(task: ITaskDefinition, callback: (error: any, result: any) => void): void;
-
-    /**
-     * Stops the worker as soon as possible. An already started task on this worker thread might be interrupted or is prevented from starting at all.
-     */
-    stop(): void;
+  /**
+   * Stops the worker as soon as possible. An already started task on this worker thread might be interrupted or is prevented from starting at all.
+   */
+  stop(): void;
 }
 
 export default IWorkerThread;

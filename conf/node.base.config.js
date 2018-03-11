@@ -3,44 +3,67 @@ var path = require("path");
 var webpack = require("webpack");
 
 module.exports = new Config().merge({
-    entry: {
-        node: "./src/api/node.ts",
-        "node-slave": "./src/node/worker-slave/index.ts"
-    },
+  entry: {
+    parallel: "./src/api/node.ts",
+    "parallel-slave": "./src/node/worker-slave/index.ts"
+  },
 
-    module: {
-        rules: [
-            {
-                test: /\.ts$/,
-                enforce: "pre",
-                loader: "tslint-loader"
+  module: {
+    rules: [
+      {
+        test: /\.ts$/,
+        enforce: "pre",
+        loader: "tslint-loader"
+      },
+      {
+        test: /\.ts$/,
+        use: [
+          {
+            loader: "awesome-typescript-loader",
+            query: {
+              useBabel: true,
+              babelOptions: {
+                presets: [
+                  [
+                    "babel-preset-env",
+                    {
+                      targets: {
+                        node: 8
+                      },
+                      useBuiltIns: "usage",
+                      modules: false
+                    }
+                  ]
+                ]
+              }
             }
-        ],
-
-        noParse: [
-            /src\/node\/worker\/node-worker-slave-file-name.ts/
+          }
         ]
-    },
+      }
+    ],
 
-    target: "node",
+    noParse: [/src\/node\/worker\/node-worker-slave-file-name.ts/]
+  },
 
-    output: {
-        library: "parallel-es",
-        libraryTarget: "umd",
-        path: path.resolve(__dirname, "../dist")
-    },
+  target: "node",
 
-    node: {
-        __dirname: false
-    },
+  output: {
+    library: "parallel-es",
+    libraryTarget: "umd",
+    path: path.resolve(__dirname, "../dist/node")
+  },
 
-    resolve: {
-        extensions: [".webpack.js", ".web.js", ".ts", ".js"]
-    },
+  node: {
+    __dirname: false
+  },
 
-    plugins: [
-        new webpack.DefinePlugin({
-            SLAVE_FILE_NAME: "require.resolve(\"parallel-es/dist/node-slave.parallel.js\")"
-        })
-    ]
+  resolve: {
+    extensions: [".webpack.js", ".web.js", ".ts", ".js"]
+  },
+
+  plugins: [
+    new webpack.DefinePlugin({
+      SLAVE_FILE_NAME: 'require.resolve("parallel-es/dist/node-slave.parallel.js")'
+    })
+  ]
 });
